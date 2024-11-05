@@ -39,6 +39,3 @@ The project includes three tables:
 - Run the provided queries to create the database tables and perform the analyses.
 - Update data as needed to perform ongoing financial analysis.
 
-## License
-
-This project is licensed under the MIT License.
