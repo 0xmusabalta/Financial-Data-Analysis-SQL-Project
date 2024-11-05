@@ -1,0 +1,56 @@
+CREATE TABLE income (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    date DATE NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    source VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE expense (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    date DATE NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    category VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE financial_status (
+    date DATE PRIMARY KEY,
+    total_income DECIMAL(10, 2),
+    total_expense DECIMAL(10, 2),
+    net_profit DECIMAL(10, 2)
+);
+
+INSERT INTO financial_status (date, total_income, total_expense, net_profit)
+SELECT 
+    date,
+    (SELECT COALESCE(SUM(amount), 0) FROM income WHERE date = g.date) AS total_income,
+    (SELECT COALESCE(SUM(amount), 0) FROM expense WHERE date = g.date) AS total_expense,
+    ((SELECT COALESCE(SUM(amount), 0) FROM income WHERE date = g.date) - (SELECT COALESCE(SUM(amount), 0) FROM expense WHERE date = g.date)) AS net_profit
+FROM
+    (SELECT DISTINCT date FROM income UNION SELECT DISTINCT date FROM expense) g;
+
+SELECT 
+    f1.date,
+    CASE 
+        WHEN f2.total_income > 0 THEN ((f1.total_income - f2.total_income) / f2.total_income) * 100 
+        ELSE NULL
+    END AS income_growth_rate,
+    CASE 
+        WHEN f2.total_expense > 0 THEN ((f1.total_expense - f2.total_expense) / f2.total_expense) * 100 
+        ELSE NULL
+    END AS expense_growth_rate
+FROM 
+    financial_status f1
+JOIN 
+    financial_status f2 ON f1.date = DATE_ADD(f2.date, INTERVAL 1 MONTH);
+
+SELECT 
+    AVG(amount) AS average_income,
+    STDDEV(amount) AS standard_deviation
+FROM 
+    income;
+
+SELECT 
+    AVG(amount) AS average_expense,
+    STDDEV(amount) AS standard_deviation
+FROM 
+    expense;
